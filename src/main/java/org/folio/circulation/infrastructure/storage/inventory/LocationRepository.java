@@ -40,6 +40,7 @@ import org.folio.circulation.support.FindWithMultipleCqlIndexValues;
 import org.folio.circulation.support.SingleRecordFetcher;
 import org.folio.circulation.support.fetching.CqlQueryFinder;
 import org.folio.circulation.support.http.client.CqlQuery;
+import org.folio.circulation.support.http.client.PageLimit;
 import org.folio.circulation.support.results.Result;
 
 public class LocationRepository {
@@ -138,7 +139,9 @@ public class LocationRepository {
       new LocationMapper()::toDomain);
 
     return fetcher.findByIds(locationIds)
-      .thenCompose(this::loadLibrariesForLocations);
+      .thenCompose(this::loadLibrariesForLocations)
+      .thenCompose(this::loadCampusesForLocations)
+      .thenCompose(this::loadInstitutionsForLocations);
   }
 
   private CompletableFuture<Result<Location>> loadLibrary(Location location) {
@@ -208,6 +211,19 @@ public class LocationRepository {
       .thenApply(mapResult(records -> records.toMap(Library::getId)));
   }
 
+  private CompletableFuture<Result<MultipleRecords<Location>>> loadCampusesForLocations(
+    Result<MultipleRecords<Location>> multipleRecordsResult) {
+
+    log.debug("loadCampusesForLocations:: parameters multipleRecordsResult: {}",
+      () -> resultAsString(multipleRecordsResult));
+
+    return multipleRecordsResult.combineAfter(
+      locations -> getCampuses(locations.getRecords()), (locations, campuses) ->
+        locations.mapRecords(location -> location.withCampus(
+          campuses.getOrDefault(location.getCampusId(), Campus.unknown(location.getCampusId())))));
+
+  }
+
   public CompletableFuture<Result<Map<String, Campus>>> getCampuses(
     Collection<Location> locations) {
 
@@ -221,6 +237,19 @@ public class LocationRepository {
 
     return fetcher.findByIds(campusesIds)
       .thenApply(mapResult(records -> records.toMap(Campus::getId)));
+  }
+
+  private CompletableFuture<Result<MultipleRecords<Location>>> loadInstitutionsForLocations(
+    Result<MultipleRecords<Location>> multipleRecordsResult) {
+
+    log.debug("loadInstitutionsForLocations:: parameters multipleRecordsResult: {}",
+      () -> resultAsString(multipleRecordsResult));
+
+    return multipleRecordsResult.combineAfter(
+      locations -> getInstitutions(locations.getRecords()), (locations, institutions) ->
+        locations.mapRecords(location -> location.withInstitution(
+          institutions.getOrDefault(location.getInstitutionId(), Institution.unknown(location.getInstitutionId())))));
+
   }
 
   public CompletableFuture<Result<Map<String, Institution>>> getInstitutions(
@@ -287,7 +316,7 @@ public class LocationRepository {
     log.debug("fetchLocationsForServicePoint:: parameters servicePointId: {}", servicePointId);
 
     return new CqlQueryFinder<>(locationsStorageClient, "locations", new LocationMapper()::toDomain)
-      .findByQuery(CqlQuery.match("servicePointIds", servicePointId))
+      .findByQuery(CqlQuery.match("servicePointIds", servicePointId), PageLimit.maximumLimit())
       .thenApply(r -> r.map(MultipleRecords::getRecords));
   }
 

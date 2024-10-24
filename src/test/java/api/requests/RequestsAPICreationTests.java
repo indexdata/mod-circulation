@@ -631,6 +631,64 @@ public class RequestsAPICreationTests extends APITests {
     assertThat(publishedEvents.filterToList(byEventType("LOAN_DUE_DATE_CHANGED")), hasSize(0));
   }
 
+  @ParameterizedTest
+  @CsvSource(value = {
+    "NU/JC/DL/3F",
+    "DLRC",
+    "JC",
+    "NU"
+  })
+  void createTitleLevelRequestWhenTlrEnabledSetLocation(String locationCode) {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    UUID instanceId = items.get(0).getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
+      .page()
+      .withNoHoldingsRecordId()
+      .withNoItemId()
+      .titleRequestLevel()
+      .withInstanceId(instanceId)
+      .withPickupServicePointId(pickupServicePointId)
+      .withRequesterId(patronId)
+      .withItemLocationCode(locationCode));
+
+    JsonObject request = requestResource.getJson();
+    assertThat(request.getString("requestLevel"), is("Title"));
+  }
+
+  @Test
+  void createTitleLevelRequestWhenTlrEnabledSetLocationNoItems() {
+    UUID patronId = usersFixture.charlotte().getId();
+    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
+
+    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
+    UUID instanceId = items.get(0).getInstanceId();
+
+    configurationsFixture.enableTlrFeature();
+
+    Response response = requestsClient.attemptCreate(
+        new RequestBuilder()
+          .page()
+          .withNoHoldingsRecordId()
+          .withNoItemId()
+          .titleRequestLevel()
+          .withInstanceId(instanceId)
+          .withPickupServicePointId(pickupServicePointId)
+          .withRequesterId(patronId)
+          .withItemLocationCode("DoesNotExist")
+          .create());
+
+    assertThat(response.getStatusCode(), is(422));
+    assertThat(response.getJson(), hasErrorWith(
+      hasMessage("Cannot create page TLR for this instance ID - no pageable " +
+        "available items found in forced location")));
+  }
+
   @Test
   void cannotCreateRequestWithNonExistentRequestLevelWhenTlrEnabled() {
     UUID patronId = usersFixture.charlotte().getId();
@@ -4979,6 +5037,46 @@ public class RequestsAPICreationTests extends APITests {
     assertThat("printDetails should be null for request2 because the print event feature is disabled",
       requestRepresentation2.getJsonObject("printDetails"), Matchers.nullValue());
   }
+
+  @Test
+  void itemLevelRequestShouldBeCreatedWithDeliveryFulfillmentPreference() {
+    final UUID requestPolicyId = UUID.randomUUID();
+    policiesActivation.use(new RequestPolicyBuilder(
+      requestPolicyId,
+      List.of(PAGE),
+      "Test request policy",
+      "Test description",
+      Map.of(PAGE, Set.of(servicePointsFixture.cd2().getId()))));
+
+    final IndividualResource work = addressTypesFixture.work();
+    ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
+    final IndividualResource charlotte = usersFixture.charlotte(
+      builder -> builder.withAddress(
+        new Address(work.getId(),
+          "Fake first address line",
+          "Fake second address line",
+          "Fake city",
+          "Fake region",
+          "Fake postal code",
+          "Fake country code")));
+
+    Response response = requestsClient.attemptCreate(new RequestBuilder()
+      .itemRequestLevel()
+      .withFulfillmentPreference("Delivery")
+      .withRequestType(PAGE.getValue())
+      .withInstanceId(item.getInstanceId())
+      .withHoldingsRecordId(item.getHoldingsRecordId())
+      .withItemId(item.getId())
+      .by(charlotte)
+      .withDeliveryAddressType(work.getId()));
+
+    assertThat(response, hasStatus(HTTP_CREATED));
+    assertThat(response.getJson().getString("requestLevel"), is(RequestLevel.ITEM.getValue()));
+    assertThat(response.getJson().getString("requestType"), is(PAGE.getValue()));
+    assertThat(response.getJson().getString("fulfillmentPreference"), is("Delivery"));
+    assertThat(response.getJson().getString("deliveryAddressTypeId"), is(work.getId()));
+  }
+
   private void setUpNoticesForTitleLevelRequests(boolean isNoticeEnabledInTlrSettings,
     boolean isNoticeEnabledInNoticePolicy) {
 
