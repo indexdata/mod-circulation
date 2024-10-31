@@ -10,6 +10,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -24,6 +25,7 @@ import org.folio.circulation.domain.Department;
 import org.folio.circulation.domain.FeeFineAction;
 import org.folio.circulation.domain.Instance;
 import org.folio.circulation.domain.Item;
+import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Loan;
 import org.folio.circulation.domain.Location;
 import org.folio.circulation.domain.Request;
@@ -139,6 +141,7 @@ public class TemplateContextUtil {
       .stream()
       .map(JsonObject.class::cast)
       .map(pickSlip -> pickSlip.getJsonObject(ITEM))
+      .filter(Objects::nonNull)
       .forEach(item -> item.put("effectiveLocationPrimaryServicePointName", primaryServicePoint.getName()));
 
     log.debug("addPrimaryServicePointNameToStaffSlipContext:: Result entries: {}, " +
@@ -211,7 +214,7 @@ public class TemplateContextUtil {
       .put("displaySummary", item.getDisplaySummary())
       .put("descriptionOfPieces", item.getDescriptionOfPieces());
 
-    Location location = item.canFloatThroughCheckInServicePoint() ?
+    Location location = (item.canFloatThroughCheckInServicePoint() && item.isInStatus(ItemStatus.AVAILABLE)) ?
       item.getFloatDestinationLocation() : item.getLocation();
 
     if (location != null) {
