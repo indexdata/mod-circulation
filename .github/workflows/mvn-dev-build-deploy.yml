@@ -66,11 +66,22 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
+<<<<<<< HEAD
       - name: Build and SQ analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=indexdata -Dsonar.projectKey=indexdata_${{ github.event.repository.name }}
+=======
+      - name: Maven build
+        run: mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install org.jacoco:jacoco-maven-plugin:report
+
+      - name: SQ analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=indexdata -Dsonar.projectKey=indexdata_${{ github.event.repository.name }}
+>>>>>>> 645297a1d64d7245d1d8d05a91a8bf7c0cb70f60
 
       - name: Update ModuleDescriptor Id
         run: |
@@ -100,7 +111,11 @@ jobs:
 
       - name: Build and publish Docker image
         if: ${{ env.CURRENT_BRANCH == env.PUBLISH_BRANCH }}
+<<<<<<< HEAD
         uses: docker/build-push-action@v6
+=======
+        uses: docker/build-push-action@v5
+>>>>>>> 645297a1d64d7245d1d8d05a91a8bf7c0cb70f60
         with:
           context: .
           push: true
