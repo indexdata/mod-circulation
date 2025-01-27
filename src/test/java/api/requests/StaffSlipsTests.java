@@ -11,6 +11,7 @@ import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTime
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -70,6 +71,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoSlipsForNonExistentServicePointId(SlipsType slipsType) {
+    configurationsFixture.configurePrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -88,6 +90,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoSlipsForWrongServicePointId(SlipsType slipsType) {
+    configurationsFixture.configurePrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -108,6 +111,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoSlipsWhenThereAreNoItems(SlipsType slipsType) {
+    configurationsFixture.configurePrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     Response response = slipsType.get(servicePointId);
 
@@ -118,6 +122,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoPickSlipsWhenItemHasOpenRequestWithWrongStatus(SlipsType slipsType) {
+    configurationsFixture.configurePrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -141,6 +146,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @MethodSource(value = "getAllowedStatusesForHoldRequest")
   void responseContainsSearchSlipsForItemWithAllowedStatus(ItemStatus itemStatus) {
+    configurationsFixture.configurePrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponNod(b -> b.withStatus(itemStatus.getValue()));
 
@@ -181,6 +187,7 @@ class StaffSlipsTests extends APITests {
   })
   void responseContainsSlipWithAllAvailableTokens(String countryCode, String primaryAddress,
     String slipsTypeName) {
+    configurationsFixture.configurePrintHoldRequests(true);
     SlipsType slipsType = SlipsType.valueOf(slipsTypeName);
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
@@ -323,6 +330,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void responseContainsPickSlipsForRequestsOfTypePageOnly() {
+    configurationsFixture.configurePrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
     val james = usersFixture.james();
@@ -353,6 +361,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void responseContainsSearchSlipsForRequestsOfTypeHoldOnly() {
+    configurationsFixture.configurePrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
     UserResource steve = usersFixture.steve();
@@ -384,6 +393,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseIncludesItemsFromDifferentLocationsForSameServicePoint(SlipsType slipsType) {
+    configurationsFixture.configurePrintHoldRequests(true);
     UUID circDesk1 = servicePointsFixture.cd1().getId();
 
     // Circ desk 1: Second floor
@@ -439,6 +449,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseDoesNotIncludeSlipsFromDifferentServicePoint(SlipsType slipsType) {
+    configurationsFixture.configurePrintHoldRequests(true);
     UUID circDesk1 = servicePointsFixture.cd1().getId();
     UUID circDesk4 = servicePointsFixture.cd4().getId();
 
@@ -502,6 +513,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsSlipsWhenServicePointHasManyLocations(SlipsType slipsType) {
+    configurationsFixture.configurePrintHoldRequests(true);
     final UUID servicePointId = servicePointsFixture.cd1().getId();
     final int numberOfLocations = 100;
 
@@ -543,6 +555,90 @@ class StaffSlipsTests extends APITests {
     assertResponseContains(response, slipsType, item, pageRequest, james);
   }
 
+  @Test
+  void responseContainsSearchSlipsForTLR() {
+    configurationsFixture.configurePrintHoldRequests(true);
+    settingsFixture.enableTlrFeature();
+    var servicePointId = servicePointsFixture.cd1().getId();
+    var steve = usersFixture.steve();
+    var instance = instancesFixture.basedUponDunkirk();
+    var location = locationsFixture.mainFloor();
+    var item = buildItem(instance.getId(), location);
+    checkOutFixture.checkOutByBarcode(item);
+    var holdRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointId)
+      .withInstanceId(instance.getId())
+      .by(steve);
+
+    var holdRequest = requestsClient.create(holdRequestBuilder);
+    assertThat(requestsClient.getAll(), hasSize(1));
+
+    Response response = SlipsType.SEARCH_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 1, SlipsType.SEARCH_SLIPS);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, holdRequest, steve);
+  }
+
+  @Test
+  void responseContainsSearchSlipsForQueueTLRs() {
+    configurationsFixture.configurePrintHoldRequests(true);
+    settingsFixture.enableTlrFeature();
+    var servicePointId = servicePointsFixture.cd1().getId();
+    var steve = usersFixture.steve();
+    var james = usersFixture.james();
+    var rebecca = usersFixture.rebecca();
+    var instance = instancesFixture.basedUponDunkirk();
+    var location = locationsFixture.mainFloor();
+    var item = buildItem(instance.getId(), location);
+    checkOutFixture.checkOutByBarcode(item);
+    var firstHoldRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointId)
+      .withInstanceId(instance.getId())
+      .by(steve);
+    var firstHoldRequest = requestsClient.create(firstHoldRequestBuilder);
+
+    var secondHoldRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointId)
+      .withInstanceId(instance.getId())
+      .by(james);
+    var secondHoldRequest = requestsClient.create(secondHoldRequestBuilder);
+
+    var thirdHoldRequestBuilder = new RequestBuilder()
+      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
+      .hold()
+      .titleRequestLevel()
+      .withNoItemId()
+      .withNoHoldingsRecordId()
+      .withPickupServicePointId(servicePointId)
+      .withInstanceId(instance.getId())
+      .by(rebecca);
+    var thirdHoldRequest = requestsClient.create(thirdHoldRequestBuilder);
+
+    assertThat(requestsClient.getAll(), hasSize(3));
+
+    Response response = SlipsType.SEARCH_SLIPS.get(servicePointId);
+    assertThat(response.getStatusCode(), is(HTTP_OK));
+    assertResponseHasItems(response, 3, SlipsType.SEARCH_SLIPS);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, firstHoldRequest, steve);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, secondHoldRequest, james);
+    assertResponseContains(response, SlipsType.SEARCH_SLIPS, thirdHoldRequest, rebecca);
+  }
+
   private void assertDatetimeEquivalent(ZonedDateTime firstDateTime, ZonedDateTime secondDateTime) {
     assertThat(firstDateTime.compareTo(secondDateTime), is(0));
   }
@@ -577,6 +673,28 @@ class StaffSlipsTests extends APITests {
     }
   }
 
+  private void assertResponseContains(Response response, SlipsType slipsType,
+    IndividualResource request, UserResource requester) {
+
+    long count = getSlipsStream(response, slipsType)
+      .filter(ps ->
+        request.getId().toString().equals(
+          getNestedStringProperty(ps, REQUEST_KEY, "requestID"))
+          && requester.getBarcode().equals(
+            getNestedStringProperty(ps, REQUESTER_KEY, "barcode")))
+      .count();
+
+    if (count == 0) {
+      fail("Response does not contain a pick slip with expected combination" +
+        " of item, request and requester");
+    }
+
+    if (count > 1) {
+      fail("Response contains multiple pick slips with expected combination" +
+        " of item, request and requester: " + count);
+    }
+  }
+
   private Stream<JsonObject> getSlipsStream(Response response, SlipsType slipsType) {
     return JsonObjectArrayPropertyFetcher.toStream(response.getJson(), slipsType.getCollectionName());
   }
@@ -588,6 +706,19 @@ class StaffSlipsTests extends APITests {
 
   private String getName(JsonObject jsonObject) {
     return jsonObject.getString("name");
+  }
+
+  private ItemResource buildItem(UUID instanceId, IndividualResource location) {
+    UUID isbnIdentifierId = identifierTypesFixture.isbn().getId();
+
+    return itemsFixture.basedUponSmallAngryPlanet(
+      holdingBuilder -> holdingBuilder.forInstance(instanceId)
+        .withEffectiveLocationId(location.getId()),
+      instanceBuilder -> instanceBuilder
+        .addIdentifier(isbnIdentifierId, "9780866989732")
+        .withId(instanceId),
+      itemBuilder -> itemBuilder.withBarcode("test")
+        .withMaterialType(materialTypesFixture.book().getId()));
   }
 
   @AllArgsConstructor

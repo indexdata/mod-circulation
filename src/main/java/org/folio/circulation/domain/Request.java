@@ -18,6 +18,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.CAN
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_NAME;
 import static org.folio.circulation.domain.representations.RequestProperties.CANCELLATION_REASON_PUBLIC_DESCRIPTION;
 import static org.folio.circulation.domain.representations.RequestProperties.ITEM_LOCATION_CODE;
+import static org.folio.circulation.domain.representations.RequestProperties.ECS_REQUEST_PHASE;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLDINGS_RECORD_ID;
 import static org.folio.circulation.domain.representations.RequestProperties.HOLD_SHELF_EXPIRATION_DATE;
 import static org.folio.circulation.domain.representations.RequestProperties.INSTANCE_ID;
@@ -28,6 +29,7 @@ import static org.folio.circulation.domain.representations.RequestProperties.REQ
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_LEVEL;
 import static org.folio.circulation.domain.representations.RequestProperties.REQUEST_TYPE;
 import static org.folio.circulation.domain.representations.RequestProperties.STATUS;
+import static org.folio.circulation.support.json.JsonPropertyFetcher.getBooleanProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getIntegerProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getProperty;
@@ -103,8 +105,9 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   private boolean changedPosition;
   private Integer previousPosition;
   private boolean changedStatus;
+
   @With
-  private PrintEventDetail printEventDetail;
+  private final User printDetailsRequester;
 
   public static Request from(JsonObject representation) {
     // TODO: make sure that operation and TLR settings don't matter for all processes calling
@@ -226,7 +229,7 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
       cancellationReasonRepresentation, instance, instanceItems, instanceItemsRequestPolicies,
       newItem, requester, proxy, addressType,
       loan == null ? null : loan.withItem(newItem), pickupServicePoint, changedPosition,
-      previousPosition, changedStatus, printEventDetail);
+      previousPosition, changedStatus, null);
   }
 
   @Override
@@ -242,6 +245,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
   @Override
   public User getUser() {
     return getRequester();
+  }
+
+  public User getPrintDetailsRequester() {
+    return printDetailsRequester;
   }
 
   public String getfulfillmentPreferenceName() {
@@ -262,6 +269,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public RequestType getRequestType() {
     return RequestType.from(getProperty(requestRepresentation, REQUEST_TYPE));
+  }
+
+  public EcsRequestPhase getEcsRequestPhase() {
+    return EcsRequestPhase.from(getProperty(requestRepresentation, ECS_REQUEST_PHASE));
   }
 
   boolean allowedForItem() {
@@ -290,6 +301,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public JsonObject getRequesterFromRepresentation() {
     return requestRepresentation.getJsonObject("requester");
+  }
+
+  public JsonObject getPrintDetails() {
+    return requestRepresentation.getJsonObject("printDetails");
   }
 
   public String getRequesterBarcode() {
@@ -411,6 +426,10 @@ public class Request implements ItemRelatedRecord, UserRelatedRecord {
 
   public boolean hasLoan() {
     return loan != null;
+  }
+
+  public boolean getDcbReRequestCancellationValue() {
+    return getBooleanProperty(requestRepresentation, "isDcbReRequestCancellation");
   }
 
   public enum Operation {

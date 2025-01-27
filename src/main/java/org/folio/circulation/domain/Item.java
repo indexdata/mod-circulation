@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import org.folio.circulation.resources.CheckInByBarcodeResource;
 import org.folio.circulation.storage.mappers.ItemMapper;
 
 import io.vertx.core.json.JsonObject;
@@ -357,7 +358,7 @@ public class Item {
   }
 
   public boolean canFloatThroughCheckInServicePoint() {
-    return getLocation() != null
+    return CheckInByBarcodeResource.isFloatingEnabled() && getLocation() != null
       && getLocation().isFloatingCollection()
       && getFloatDestinationLocation() != null
       && getFloatDestinationLocation().getId()  != null;
@@ -445,5 +446,24 @@ public class Item {
 
   public String getDcbItemTitle() {
     return getProperty(itemRepresentation, "instanceTitle");
+  }
+
+  public String getTenantId() {
+    return getProperty(itemRepresentation, "tenantId");
+  }
+
+  public Item changeTenantId(String tenantId) {
+    if (itemRepresentation != null) {
+      write(itemRepresentation, "tenantId", tenantId);
+    }
+    return this;
+  }
+
+  public boolean isAtLocation(String locationCode) {
+    return locationCode != null && getLocation() != null && (
+      locationCode.equals(getLocation().getCode()) ||
+      locationCode.equals(getLocation().getLibrary().getCode()) ||
+      locationCode.equals(getLocation().getCampus().getCode()) ||
+      locationCode.equals(getLocation().getInstitution().getCode()));
   }
 }

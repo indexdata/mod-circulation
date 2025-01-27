@@ -320,7 +320,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Result<UUID> idParsingResult = getIdParameter(routingContext);
 
-    if(idParsingResult.failed()) {
+    if (idParsingResult.failed()) {
       idParsingResult.cause().writeTo(routingContext.response());
       return;
     }
@@ -329,7 +329,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     final String id = idParsingResult.value().toString();
 
-    if(resourcesForTenant.containsKey(id)) {
+    if (resourcesForTenant.containsKey(id)) {
       final JsonObject resourceRepresentation = resourcesForTenant.get(id);
 
       log.debug("Found {} resource: {}", recordTypeName,
@@ -378,8 +378,8 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    List<JsonObject> filteredItems = new FakeCQLToJSONInterpreter()
-      .execute(resourcesForTenant.values(), query);
+    List<JsonObject> filteredItems = getFakeCQLToJSONInterpreter()
+      .execute(resourcesForTenant.values(), query, context);
 
     List<JsonObject> pagedItems = filteredItems.stream()
       .skip(offset)
@@ -390,7 +390,9 @@ public class FakeStorageModule extends AbstractVerticle {
 
     result.put(collectionPropertyName, new JsonArray(pagedItems));
     result.put("totalRecords", filteredItems.size());
-
+    if(collectionPropertyName.equalsIgnoreCase("requests")) {
+      System.out.println();
+    }
     log.debug("Found {} resources: {}", recordTypeName, result.encodePrettily());
 
     HttpServerResponse response = routingContext.response();
@@ -406,6 +408,10 @@ public class FakeStorageModule extends AbstractVerticle {
 
     response.write(buffer);
     response.end();
+  }
+
+  FakeCQLToJSONInterpreter getFakeCQLToJSONInterpreter() {
+    return new FakeCQLToJSONInterpreter();
   }
 
   private void empty(RoutingContext routingContext) {
@@ -430,7 +436,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    new FakeCQLToJSONInterpreter()
+    getFakeCQLToJSONInterpreter()
       .execute(resourcesForTenant.values(), query)
       .forEach(item -> resourcesForTenant.remove(item.getString("id")));
 
@@ -444,7 +450,7 @@ public class FakeStorageModule extends AbstractVerticle {
 
     Map<String, JsonObject> resourcesForTenant = getResourcesForTenant(context);
 
-    if(resourcesForTenant.containsKey(id)) {
+    if (resourcesForTenant.containsKey(id)) {
       resourcesForTenant.remove(id);
 
       noContent().writeTo(routingContext.response());
@@ -631,7 +637,8 @@ public class FakeStorageModule extends AbstractVerticle {
         boolean isValidParameter = queryParameter.contains("query") ||
           queryParameter.contains("offset") ||
           isContainsQueryParameter(queryParameter) ||
-          queryParameter.contains("limit");
+          queryParameter.contains("limit") ||
+          queryParameter.contains("expandAll");
 
         return !isValidParameter;
       })
