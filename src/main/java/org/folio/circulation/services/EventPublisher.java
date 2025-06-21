@@ -378,7 +378,8 @@ public class EventPublisher {
   }
 
   public CompletableFuture<Result<Loan>> publishUsageAtLocationEvent(Loan loan, LogEventType eventType) {
-    return publishLogRecord((LoanLogContext.from(loan)).asJson(), eventType)
+    return publishLogRecord((LoanLogContext.from(loan))
+      .withDescription(LogContextActionResolver.resolveAction(loan.getAction())).asJson(), eventType)
       .thenApply(r -> succeeded(loan));
   }
 
