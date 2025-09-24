@@ -8,9 +8,9 @@ on:
 
 env:
   PUBLISH_BRANCH: 'deployment'
-  OKAPI_URL: 'https://orchid-dev-okapi.folio-dev.indexdata.com'
-  OKAPI_SECRET_USER: "${{ secrets.ORCHID_DEV_OKAPI_USER }}"
-  OKAPI_SECRET_PASSWORD: "${{ secrets.ORCHID_DEV_OKAPI_PASSWORD }}"
+  OKAPI_URL: 'https://folio-dev-new-okapi.folio-dev.indexdata.com'
+  OKAPI_SECRET_USER: "${{ secrets.FOLIO_DEV_NEW_OKAPI_USER }}"
+  OKAPI_SECRET_PASSWORD: "${{ secrets.FOLIO_DEV_NEW_OKAPI_PASSWORD }}"
   OK_SESSION: 'session1'
 
 jobs:
@@ -22,10 +22,10 @@ jobs:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
           submodules: recursive
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: 17
+          java-version: 21
           distribution: 'temurin' # Alternative distribution options are available.
 
       - name: Prepare okclient
@@ -66,14 +66,11 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
 
-      - name: Maven build
-        run: mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install org.jacoco:jacoco-maven-plugin:report
-
-      - name: SQ analyze
+      - name: Build and SQ analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=indexdata -Dsonar.projectKey=indexdata_${{ github.event.repository.name }} -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=indexdata -Dsonar.projectKey=indexdata_${{ github.event.repository.name }}
 
       - name: Update ModuleDescriptor Id
         run: |
