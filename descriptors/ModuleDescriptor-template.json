@@ -2789,7 +2789,7 @@
       },
       {
         "name": "ENABLE_FOR_USE_AT_LOCATION",
-        "value": "false"
+        "value": "true"
       },
       {
         "name": "KAFKA_HOST",
