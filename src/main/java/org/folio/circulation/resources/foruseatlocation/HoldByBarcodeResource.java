@@ -161,7 +161,7 @@ public class HoldByBarcodeResource extends Resource {
   }
 
   private CompletableFuture<Result<HoldByBarcodeRequest>> updateLoan(HoldByBarcodeRequest request, LoanRepository loanRepository) {
-    log.info("updateLoan:: parameters: loan {}", request.getLoan().asJson());
+    log.debug("updateLoan:: parameters: loan {}", request.getLoan().asJson());
     return loanRepository.updateLoan(request.getLoan())
       .thenApply(loanResult -> loanResult.map(request::withLoan));
   }
