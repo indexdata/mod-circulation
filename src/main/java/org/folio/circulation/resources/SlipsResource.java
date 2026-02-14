@@ -21,11 +21,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.folio.circulation.domain.CirculationSetting;
 import org.folio.circulation.domain.Item;
 import org.folio.circulation.domain.ItemStatus;
 import org.folio.circulation.domain.Location;
@@ -34,8 +32,6 @@ import org.folio.circulation.domain.Request;
 import org.folio.circulation.domain.RequestType;
 import org.folio.circulation.domain.ServicePoint;
 import org.folio.circulation.domain.mapper.StaffSlipMapper;
-import org.folio.circulation.infrastructure.storage.CirculationSettingsRepository;
-import org.folio.circulation.infrastructure.storage.ConfigurationRepository;
 import org.folio.circulation.infrastructure.storage.ServicePointRepository;
 import org.folio.circulation.infrastructure.storage.inventory.ItemRepository;
 import org.folio.circulation.infrastructure.storage.inventory.LocationRepository;
@@ -44,6 +40,7 @@ import org.folio.circulation.infrastructure.storage.users.DepartmentRepository;
 import org.folio.circulation.infrastructure.storage.users.PatronGroupRepository;
 import org.folio.circulation.infrastructure.storage.users.UserRepository;
 import org.folio.circulation.resources.context.StaffSlipsContext;
+import org.folio.circulation.services.CirculationSettingsService;
 import org.folio.circulation.services.RequestFetchService;
 import org.folio.circulation.storage.mappers.LocationMapper;
 import org.folio.circulation.support.Clients;
@@ -67,12 +64,9 @@ public abstract class SlipsResource extends Resource {
   private static final String STATUS_NAME_KEY = "status.name";
   private static final String TOTAL_RECORDS_KEY = "totalRecords";
   private static final String SEARCH_SLIPS_KEY = "searchSlips";
-  private static final String PICK_SLIPS_KEY = "pickSlips";
   private static final String SERVICE_POINT_ID_PARAM = "servicePointId";
   private static final String EFFECTIVE_LOCATION_ID_KEY = "effectiveLocationId";
   private static final String PRIMARY_SERVICE_POINT_KEY = "primaryServicePoint";
-  private static final String PRINT_EVENT_FLAG_QUERY = "query=name=printEventLogFeature";
-  public static final String PRINT_EVENT_LOG_FEATURE = "printEventLogFeature";
 
   private final String rootPath;
   private final String collectionName;
@@ -131,11 +125,12 @@ public abstract class SlipsResource extends Resource {
     final var servicePointRepository = new ServicePointRepository(clients);
     final var patronGroupRepository = new PatronGroupRepository(clients);
     final var departmentRepository = new DepartmentRepository(clients);
+    final var requestFetchService = new RequestFetchService(clients, requestType);
 
     return fetchLocationsForServicePoint(servicePointId, clients)
       .thenComposeAsync(r -> r.after(ctx -> fetchItemsForLocations(ctx,
         itemRepository, LocationRepository.using(clients, servicePointRepository))))
-      .thenComposeAsync(r -> r.after(ctx -> new RequestFetchService().fetchRequests(ctx, clients, requestType)))
+      .thenComposeAsync(r -> r.after(requestFetchService::fetchRequests))
       .thenComposeAsync(r -> r.after(ctx -> userRepository.findUsersForRequests(
         ctx.getRequests())))
       .thenComposeAsync(r -> r.after(patronGroupRepository::findPatronGroupsForRequestsUsers))
@@ -148,45 +143,14 @@ public abstract class SlipsResource extends Resource {
   }
 
   private CompletableFuture<Result<Boolean>> isStaffSlipsPrintingDisabled(Clients clients) {
-    if (PICK_SLIPS_KEY.equals(collectionName) && requestType == RequestType.PAGE) {
-      log.info("isStaffSlipsPrintingDisabled:: PICK_SLIPS_KEY and PAGE requestType condition met");
-      return new CirculationSettingsRepository(clients).findBy(PRINT_EVENT_FLAG_QUERY)
-        .thenApply(r -> r.map(this::isPrintingPickSlipsDisabled));
-    } else if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
+    if (SEARCH_SLIPS_KEY.equals(collectionName) && requestType == RequestType.HOLD) {
       log.info("isStaffSlipsPrintingDisabled:: SEARCH_SLIPS_KEY and HOLD requestType condition met");
-      return new ConfigurationRepository(clients).lookupPrintHoldRequestsEnabled()
-        .thenApply(r -> r.map(config -> !config.isPrintHoldRequestsEnabled()));
+      return new CirculationSettingsService(clients)
+        .getPrintHoldRequestsEnabled()
+        .thenApply(r -> r.map(setting -> !setting.isPrintHoldRequestsEnabled()));
     } else {
       return ofAsync(false);
     }
-  }
-
-  private boolean isPrintingPickSlipsDisabled(
-    MultipleRecords<CirculationSetting> settingsRecords) {
-
-    log.debug("isPrintingPickSlipsEnabled:: parameters settingsRecords: {}",
-      () -> multipleRecordsAsString(settingsRecords));
-
-    if (settingsRecords == null) {
-      log.info("isPrintingPickSlipsEnabled:: settingsRecords is null");
-      return false;
-    }
-
-    return settingsRecords.getRecords()
-      .stream()
-      .filter(setting -> PRINT_EVENT_LOG_FEATURE.equals(setting.getName()))
-      .findFirst()
-      .map(CirculationSetting::getValue)
-      .map(setting -> setting.getValue("enablePrintLog"))
-      .map(enablePrintLogValue -> {
-        if (enablePrintLogValue instanceof Boolean enablePrintLogBoolean) {
-          return !enablePrintLogBoolean;
-        } else if (enablePrintLogValue instanceof String enablePrintLogString) {
-          return !BooleanUtils.toBoolean(enablePrintLogString);
-        }
-        return false;
-      })
-      .orElse(false);
   }
 
   private CompletableFuture<Result<StaffSlipsContext>> fetchLocationsForServicePoint(

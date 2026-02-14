@@ -1,6 +1,7 @@
 package api.requests;
 
 import static api.support.matchers.JsonObjectMatcher.hasJsonPath;
+import static api.support.matchers.JsonObjectMatcher.hasNoJsonPath;
 import static api.support.matchers.TextDateTimeMatcher.isEquivalentTo;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static java.time.ZoneOffset.UTC;
@@ -10,6 +11,7 @@ import static org.folio.circulation.domain.RequestType.PAGE;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getDateTimeProperty;
 import static org.folio.circulation.support.json.JsonPropertyFetcher.getNestedStringProperty;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.collection.ArrayMatching.arrayContainingInAnyOrder;
@@ -49,6 +51,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import api.support.APITests;
 import api.support.builders.Address;
+import api.support.builders.LocationBuilder;
 import api.support.builders.RequestBuilder;
 import api.support.fixtures.AddressExamples;
 import api.support.http.IndividualResource;
@@ -71,7 +74,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoSlipsForNonExistentServicePointId(SlipsType slipsType) {
-    configureSlipsFeatureForType(slipsType, true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -90,7 +93,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoSlipsForWrongServicePointId(SlipsType slipsType) {
-    configureSlipsFeatureForType(slipsType, true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -111,7 +114,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoSlipsWhenThereAreNoItems(SlipsType slipsType) {
-    configureSlipsFeatureForType(slipsType, true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     Response response = slipsType.get(servicePointId);
 
@@ -122,7 +125,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsNoPickSlipsWhenItemHasOpenRequestWithWrongStatus(SlipsType slipsType) {
-    configureSlipsFeatureForType(slipsType, true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponSmallAngryPlanet();
 
@@ -146,7 +149,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @MethodSource(value = "getAllowedStatusesForHoldRequest")
   void responseContainsSearchSlipsForItemWithAllowedStatus(ItemStatus itemStatus) {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     ItemResource item = itemsFixture.basedUponNod(b -> b.withStatus(itemStatus.getValue()));
 
@@ -188,8 +191,8 @@ class StaffSlipsTests extends APITests {
   void responseContainsSlipWithAllAvailableTokens(String countryCode, String primaryAddress,
     String slipsTypeName) {
 
-    configureSlipsFeatureForType(SlipsType.valueOf(slipsTypeName), true);
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     SlipsType slipsType = SlipsType.valueOf(slipsTypeName);
     IndividualResource servicePoint = servicePointsFixture.cd1();
     UUID servicePointId = servicePoint.getId();
@@ -335,7 +338,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
   void responseContainsPickSlipsForRequestsOfTypePageOnly(Object trueValue) {
-    circulationSettingFixture.configurePrintEventLogFeature(trueValue);
+    circulationSettingsFixture.setPrintHoldRequests(true);
 
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
@@ -367,7 +370,7 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void responseContainsSearchSlipsForRequestsOfTypeHoldOnly() {
-    configurationsFixture.configurePrintHoldRequests(true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID servicePointId = servicePointsFixture.cd1().getId();
     val item = itemsFixture.basedUponSmallAngryPlanet();
     UserResource steve = usersFixture.steve();
@@ -399,7 +402,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseIncludesItemsFromDifferentLocationsForSameServicePoint(SlipsType slipsType) {
-    configureSlipsFeatureForType(slipsType, true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID circDesk1 = servicePointsFixture.cd1().getId();
 
     // Circ desk 1: Second floor
@@ -455,7 +458,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseDoesNotIncludeSlipsFromDifferentServicePoint(SlipsType slipsType) {
-    configureSlipsFeatureForType(slipsType, true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     UUID circDesk1 = servicePointsFixture.cd1().getId();
     UUID circDesk4 = servicePointsFixture.cd4().getId();
 
@@ -519,7 +522,7 @@ class StaffSlipsTests extends APITests {
   @ParameterizedTest
   @EnumSource(value = SlipsType.class)
   void responseContainsSlipsWhenServicePointHasManyLocations(SlipsType slipsType) {
-    configureSlipsFeatureForType(slipsType, true);
+    circulationSettingsFixture.setPrintHoldRequests(true);
     final UUID servicePointId = servicePointsFixture.cd1().getId();
     final int numberOfLocations = 100;
 
@@ -563,8 +566,8 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void responseContainsSearchSlipsForTLR() {
-    configurationsFixture.configurePrintHoldRequests(true);
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    circulationSettingsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
     var steve = usersFixture.steve();
     var instance = instancesFixture.basedUponDunkirk();
@@ -592,11 +595,9 @@ class StaffSlipsTests extends APITests {
       "The Long Way to a Small, Angry Planet"));
   }
 
-  @ParameterizedTest
-  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
-  void pickSlipForTitleLevelRequestContainsItemData(Object trueValue) {
-    circulationSettingFixture.configurePrintEventLogFeature(trueValue);
-    settingsFixture.enableTlrFeature();
+  @Test
+  void pickSlipForTitleLevelRequestContainsItemData() {
+    circulationSettingsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
     var requester = usersFixture.steve();
     var instance = instancesFixture.basedUponDunkirk();
@@ -632,8 +633,8 @@ class StaffSlipsTests extends APITests {
 
   @Test
   void responseContainsSearchSlipsForQueueTLRs() {
-    configurationsFixture.configurePrintHoldRequests(true);
-    settingsFixture.enableTlrFeature();
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    circulationSettingsFixture.enableTlrFeature();
     var servicePointId = servicePointsFixture.cd1().getId();
     var steve = usersFixture.steve();
     var james = usersFixture.james();
@@ -686,41 +687,8 @@ class StaffSlipsTests extends APITests {
   }
 
   @Test
-  void excludeILRPickSlipCountWhenCreatingTLRPageRequest() {
-    UUID patronId = usersFixture.charlotte().getId();
-    final UUID pickupServicePointId = servicePointsFixture.cd1().getId();
-
-    final var items = itemsFixture.createMultipleItemsForTheSameInstance(2);
-    UUID instanceId = items.get(0).getInstanceId();
-
-    settingsFixture.enableTlrFeature();
-
-    IndividualResource requestResource = requestsClient.create(new RequestBuilder()
-      .page()
-      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
-      .withNoHoldingsRecordId()
-      .withNoItemId()
-      .titleRequestLevel()
-      .withInstanceId(instanceId)
-      .withPickupServicePointId(pickupServicePointId)
-      .withRequesterId(patronId)
-      .by(usersFixture.charlotte()));
-
-    JsonObject request = requestResource.getJson();
-    assertThat(request.getString("requestLevel"), is("Title"));
-
-    Response response = SlipsType.PICK_SLIPS.get(pickupServicePointId);
-    assertThat(response.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(response, 0, SlipsType.PICK_SLIPS);
-  }
-
-  @ParameterizedTest
-  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
-  void responseContainsPickSlipsForTitleLevelRequestsAssociatedWithMoreThan10DifferentHoldings(
-    Object trueValue) {
-
-    circulationSettingFixture.configurePrintEventLogFeature(trueValue);
-    settingsFixture.enableTlrFeature();
+  void responseContainsPickSlipsForTitleLevelRequestsAssociatedWithMoreThan10DifferentHoldings() {
+    circulationSettingsFixture.enableTlrFeature();
     UserResource requester = usersFixture.steve();
     UUID servicePointId = servicePointsFixture.cd1().getId();
     UUID locationId = locationsFixture.basedUponExampleLocation(
@@ -741,13 +709,9 @@ class StaffSlipsTests extends APITests {
     assertResponseHasItems(response, 11, SlipsType.PICK_SLIPS);
   }
 
-  @ParameterizedTest
-  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueValues")
-  void responseContainsPickSlipsForManyTitleLevelRequestsCreatedForSameHoldingAndInstance(
-    Object trueValue) {
-
-    circulationSettingFixture.configurePrintEventLogFeature(trueValue);
-    settingsFixture.enableTlrFeature();
+  @Test
+  void responseContainsPickSlipsForManyTitleLevelRequestsCreatedForSameHoldingAndInstance() {
+    circulationSettingsFixture.enableTlrFeature();
     int batchSize = 50; // default value from CqlIndexValuesFinder
 
     UUID servicePointId = servicePointsFixture.cd1().getId();
@@ -774,42 +738,53 @@ class StaffSlipsTests extends APITests {
     assertResponseHasItems(response, batchSize + 1, SlipsType.PICK_SLIPS);
   }
 
-  @ParameterizedTest
-  @MethodSource("api.support.utl.BooleanArgumentProvider#provideTrueAndFalseValues")
-  void responseContainsNoRecordsIfPickSlipsDisabled(Object trueValue, Object falseValue) {
-    circulationSettingFixture.configurePrintEventLogFeature(trueValue);
+  @Test
+  void searchSlipForTitleLevelHoldRequestIsPrintableAtAllServicePointsWithRelevantHoldings() {
+    circulationSettingsFixture.setPrintHoldRequests(true);
+    circulationSettingsFixture.enableTlrFeature();
 
-    UUID servicePointId = servicePointsFixture.cd1().getId();
-    val item = itemsFixture.basedUponSmallAngryPlanet();
-    val james = usersFixture.james();
+    UserResource requester = usersFixture.steve();
+    UUID instanceId = instancesFixture.basedUponDunkirk().getId();
 
-    RequestBuilder firstRequestBuilder = new RequestBuilder()
-      .withStatus(RequestStatus.OPEN_NOT_YET_FILLED.getValue())
-      .page()
-      .withPickupServicePointId(servicePointId)
-      .forItem(item)
-      .by(james);
+    UUID servicePointId1 = servicePointsFixture.cd1().getId();
+    UUID servicePointId2 = servicePointsFixture.cd2().getId();
+    UUID servicePointId3 = servicePointsFixture.cd3().getId();
 
-    IndividualResource firstRequest = requestsClient.create(firstRequestBuilder);
-    Response response = SlipsType.PICK_SLIPS.get(servicePointId);
+    IndividualResource location1 = buildLocation("Location for service point 1", servicePointId1);
+    IndividualResource location2 = buildLocation("Location for service point 2", servicePointId2);
 
-    assertThat(response.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(response, 1, SlipsType.PICK_SLIPS);
-    assertResponseContains(response, SlipsType.PICK_SLIPS, item, firstRequest, james);
+    holdingsFixture.createHoldingsRecord(instanceId, location1.getId());
+    holdingsFixture.createHoldingsRecord(instanceId, location2.getId());
 
-    circulationSettingFixture.configurePrintEventLogFeature(falseValue);
-    response = SlipsType.PICK_SLIPS.get(servicePointId);
+    IndividualResource hold = requestsFixture.placeTitleLevelHoldShelfRequest(instanceId, requester);
+    assertThat(hold.getJson(), allOf(hasNoJsonPath("itemId"), hasNoJsonPath("holdingsRecordId")));
 
-    assertThat(response.getStatusCode(), is(HTTP_OK));
-    assertResponseHasItems(response, 0, SlipsType.PICK_SLIPS);
+    assertResponseHasItems(SlipsType.SEARCH_SLIPS.get(servicePointId1), 1, SlipsType.SEARCH_SLIPS);
+    assertResponseHasItems(SlipsType.SEARCH_SLIPS.get(servicePointId2), 1, SlipsType.SEARCH_SLIPS);
+    assertResponseHasItems(SlipsType.SEARCH_SLIPS.get(servicePointId3), 0, SlipsType.SEARCH_SLIPS);
   }
 
-  private void configureSlipsFeatureForType(SlipsType slipsType, boolean enabled) {
-    if (slipsType == SlipsType.PICK_SLIPS) {
-      circulationSettingFixture.configurePrintEventLogFeature(enabled);
-    } else if (slipsType == SlipsType.SEARCH_SLIPS) {
-      configurationsFixture.configurePrintHoldRequests(enabled);
-    }
+  @Test
+  void servicePointForTitleLevelRequestPickSlipIsChosenBasedOnItemLocation() {
+    circulationSettingsFixture.enableTlrFeature();
+
+    UUID instanceId = UUID.randomUUID();
+    UserResource requester = usersFixture.steve();
+    UUID servicePointId1 = servicePointsFixture.cd1().getId();
+    UUID servicePointId2 = servicePointsFixture.cd2().getId();
+    UUID itemLocationId = buildLocation("Item location", servicePointId1).getId();
+    UUID holdingLocationId = buildLocation("Holding location", servicePointId2).getId();
+
+    ItemResource item = itemsFixture.basedUponDunkirk(
+      holdingBuilder -> holdingBuilder.withEffectiveLocationId(holdingLocationId),
+      instanceBuilder -> instanceBuilder.withId(instanceId),
+      itemBuilder -> itemBuilder.withEffectiveLocation(itemLocationId));
+
+    IndividualResource page = requestsFixture.placeTitleLevelPageRequest(instanceId, requester);
+    assertThat(page.getJson(), hasJsonPath("itemId", item.getId().toString()));
+
+    assertResponseHasItems(SlipsType.PICK_SLIPS.get(servicePointId1), 1, SlipsType.PICK_SLIPS);
+    assertResponseHasItems(SlipsType.PICK_SLIPS.get(servicePointId2), 0, SlipsType.PICK_SLIPS);
   }
 
   private void assertDatetimeEquivalent(ZonedDateTime firstDateTime, ZonedDateTime secondDateTime) {
@@ -892,6 +867,21 @@ class StaffSlipsTests extends APITests {
         .withId(instanceId),
       itemBuilder -> itemBuilder.withBarcode("test")
         .withMaterialType(materialTypesFixture.book().getId()));
+  }
+
+  private IndividualResource buildLocation(String name, UUID primaryServicePointId) {
+    UUID institutionId = locationsFixture.createInstitution("Test institution").getId();
+    UUID campusId = locationsFixture.createCampus("Test campus", institutionId).getId();
+    UUID libraryId = locationsFixture.createLibrary("Test library", campusId).getId();
+
+    return locationsFixture.createLocation(
+      new LocationBuilder()
+        .forLibrary(libraryId)
+        .forCampus(campusId)
+        .forInstitution(institutionId)
+        .withName(name)
+        .withCode(name)
+        .withPrimaryServicePoint(primaryServicePointId));
   }
 
   @AllArgsConstructor

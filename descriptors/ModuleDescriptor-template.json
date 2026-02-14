@@ -51,9 +51,7 @@
             "circulation.pick-slips.get"
           ],
           "modulePermissions": [
-            "modperms.circulation.pick-slips.get",
-            "circulation.settings.collection.get",
-            "circulation.settings.item.get"
+            "modperms.circulation.pick-slips.get"
           ]
         }
       ]
@@ -72,6 +70,24 @@
           ],
           "modulePermissions": [
             "modperms.circulation.search-slips.get"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "request-anonymization",
+      "version": "0.1",
+      "handlers": [
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/request-anonymization/{requestId}",
+          "permissionsRequired": [
+            "circulation.requests.anonymize.item.post"
+          ],
+          "modulePermissions": [
+            "modperms.circulation.requests.anonymize.item"
           ]
         }
       ]
@@ -137,8 +153,7 @@
             "circulation.loans.change-due-date.post"
           ],
           "modulePermissions": [
-            "perms.circulation.loans.change-due-date.post",
-            "configuration.entries.collection.get"
+            "perms.circulation.loans.change-due-date.post"
           ]
         }
       ]
@@ -686,8 +701,6 @@
             "patron-action-session-storage.patron-action-sessions.collection.get",
             "circulation-storage.loans.collection.get",
             "circulation-storage.circulation-rules.get",
-            "configuration.entries.item.get",
-            "configuration.entries.collection.get",
             "circulation.internal.fetch-items.collection.get",
             "circulation-storage.loan-policies.collection.get",
             "users.item.get",
@@ -723,6 +736,8 @@
             "circulation.rules.request-policy-all.get",
             "circulation-storage.request-policies.item.get",
             "circulation-storage.request-policies.collection.get",
+            "circulation.settings.item.get",
+            "circulation.settings.collection.get",
             "inventory-storage.items.item.get",
             "inventory-storage.items.collection.get",
             "circulation.internal.fetch-items.collection.get",
@@ -731,12 +746,7 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.holdings.collection.get",
             "inventory-storage.instances.item.get",
-            "inventory-storage.instances.collection.get",
-            "configuration.entries.item.get",
-            "configuration.entries.collection.get",
-            "mod-settings.entries.item.get",
-            "mod-settings.entries.collection.get",
-            "mod-settings.global.read.circulation"
+            "inventory-storage.instances.collection.get"
           ]
         }
       ]
@@ -830,6 +840,8 @@
             "circulation-storage.loans.collection.get",
             "circulation.internal.fetch-items.collection.get",
             "circulation-storage.loan-policies.collection.get",
+            "circulation-storage.circulation-settings.item.get",
+            "circulation-storage.circulation-settings.collection.get",
             "users.item.get",
             "users.collection.get",
             "addresstypes.collection.get",
@@ -838,7 +850,6 @@
             "circulation-storage.patron-notice-policies.item.get",
             "patron-notice.post",
             "patron-action-session-storage.patron-action-sessions.item.delete",
-            "configuration.entries.collection.get",
             "pubsub.publish.post",
             "circulation-storage.loans-history.collection.get"
           ],
@@ -882,7 +893,8 @@
             "circulation-storage.loan-policies.collection.get",
             "circulation.internal.fetch-items.collection.get",
             "circulation.rules.loan-policy.get",
-            "configuration.entries.collection.get",
+            "circulation-storage.circulation-settings.item.get",
+            "circulation-storage.circulation-settings.collection.get",
             "patron-notice.post",
             "users.item.get",
             "addresstypes.collection.get",
@@ -914,7 +926,8 @@
             "circulation-storage.fixed-due-date-schedules.collection.get",
             "circulation.internal.fetch-items.collection.get",
             "circulation.rules.loan-policy.get",
-            "configuration.entries.collection.get",
+            "circulation-storage.circulation-settings.item.get",
+            "circulation-storage.circulation-settings.collection.get",
             "patron-notice.post",
             "users.item.get",
             "addresstypes.collection.get",
@@ -946,7 +959,8 @@
             "addresstypes.collection.get",
             "usergroups.collection.get",
             "usergroups.item.get",
-            "configuration.entries.collection.get",
+            "circulation-storage.circulation-settings.item.get",
+            "circulation-storage.circulation-settings.collection.get",
             "pubsub.publish.post",
             "circulation-storage.circulation-rules.get",
             "circulation.rules.notice-policy.get",
@@ -968,8 +982,8 @@
             "scheduled-notice-storage.scheduled-notices.item.put",
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.loan-policies.collection.get",
-            "configuration.entries.item.get",
-            "configuration.entries.collection.get",
+            "circulation-storage.circulation-settings.item.get",
+            "circulation-storage.circulation-settings.collection.get",
             "patron-notice.post",
             "accounts.item.get",
             "accounts.collection.get",
@@ -1004,8 +1018,8 @@
             "circulation-storage.loan-policies.collection.get",
             "patron-action-session-storage.patron-action-sessions.item.get",
             "patron-action-session-storage.patron-action-sessions.collection.get",
-            "configuration.entries.item.get",
-            "configuration.entries.collection.get",
+            "circulation-storage.circulation-settings.item.get",
+            "circulation-storage.circulation-settings.collection.get",
             "patron-notice.post",
             "accounts.item.get",
             "accounts.collection.get",
@@ -1040,8 +1054,8 @@
             "scheduled-notice-storage.scheduled-notices.item.put",
             "circulation-storage.loan-policies.item.get",
             "circulation-storage.loan-policies.collection.get",
-            "configuration.entries.item.get",
-            "configuration.entries.collection.get",
+            "circulation-storage.circulation-settings.item.get",
+            "circulation-storage.circulation-settings.collection.get",
             "patron-notice.post",
             "accounts.item.get",
             "accounts.collection.get",
@@ -1081,6 +1095,8 @@
             "circulation-storage.fixed-due-date-schedules.item.get",
             "circulation-storage.fixed-due-date-schedules.collection.get",
             "circulation-storage.patron-notice-policies.item.get",
+            "circulation-storage.circulation-settings.item.get",
+            "circulation-storage.circulation-settings.collection.get",
             "circulation.rules.loan-policy.get",
             "circulation.rules.request-policy.get",
             "circulation.rules.notice-policy.get",
@@ -1090,7 +1106,6 @@
             "users.collection.get",
             "addresstypes.collection.get",
             "proxiesfor.collection.get",
-            "configuration.entries.collection.get",
             "scheduled-notice-storage.scheduled-notices.collection.delete",
             "scheduled-notice-storage.scheduled-notices.item.post",
             "patron-notice.post",
@@ -1100,6 +1115,15 @@
             "pubsub.publish.post",
             "circulation-storage.loans-history.collection.get"
           ],
+          "unit": "minute",
+          "delay": "60"
+        },
+        {
+          "methods": [
+            "POST"
+          ],
+          "pathPattern": "/circulation/scheduled-request-anonymize-processing",
+          "modulePermissions": [],
           "unit": "minute",
           "delay": "60"
         },
@@ -1179,7 +1203,8 @@
             "overdue-fines-policies.item.get",
             "circulation.internal.fetch-items.collection.get",
             "circulation.rules.loan-policy.get",
-            "configuration.entries.collection.get",
+            "circulation-storage.circulation-settings.item.get",
+            "circulation-storage.circulation-settings.collection.get",
             "patron-notice.post",
             "users.item.get",
             "addresstypes.collection.get",
@@ -1331,10 +1356,6 @@
     {
       "id": "patron-notice",
       "version": "1.0"
-    },
-    {
-      "id": "configuration",
-      "version": "2.0"
     },
     {
       "id" : "cancellation-reason-storage",
@@ -1508,6 +1529,11 @@
       "permissionName": "circulation.loans.collection.anonymize.user.post",
       "displayName": "circulation - anonymize loans",
       "description": "anonymize loans"
+    },
+    {
+      "permissionName": "circulation.requests.anonymize.item.post",
+      "displayName": "circulation - anonymize request",
+      "description": "anonymize request"
     },
     {
       "permissionName": "circulation.loans.item.delete",
@@ -1755,6 +1781,30 @@
       "description": "To create and edit circulation functionality settings in mod-settings"
     },
     {
+      "permissionName": "circulation.request-anonymization-settings.get",
+      "displayName": "Circulation: Request Anonymization settings — GET",
+      "description": "Allows requesting Request Anonymization settings (placeholder)",
+      "subPermissions": []
+    },
+    {
+      "permissionName": "circulation.request-anonymization-settings.put",
+      "displayName": "Circulation: Request Anonymization settings — PUT",
+      "description": "Allows updating Request Anonymization settings (placeholder)",
+      "subPermissions": []
+    },
+    {
+      "permissionName": "modperms.circulation.request-anonymization-settings.get",
+      "displayName": "Module perms: Request Anonymization settings — GET",
+      "description": "Backend module permission for GET (placeholder)",
+      "subPermissions": []
+    },
+    {
+      "permissionName": "modperms.circulation.request-anonymization-settings.put",
+      "displayName": "Module perms: Request Anonymization settings — PUT",
+      "description": "Backend module permission for PUT (placeholder)",
+      "subPermissions": []
+    },
+    {
       "permissionName": "circulation.all",
       "displayName": "circulation - all permissions",
       "description": "Entire set of permissions needed to use the circulation",
@@ -1893,6 +1943,8 @@
         "circulation-storage.patron-notice-policies.item.get",
         "circulation-storage.cancellation-reasons.item.get",
         "circulation-storage.fixed-due-date-schedules.collection.get",
+        "circulation.settings.item.get",
+        "circulation.settings.collection.get",
         "circulation.rules.notice-policy.get",
         "circulation.internal.apply-rules.execute",
         "inventory-storage.items.item.put",
@@ -1904,7 +1956,6 @@
         "usergroups.item.get",
         "proxiesfor.collection.get",
         "patron-notice.post",
-        "configuration.entries.collection.get",
         "calendar.endpoint.calendars.surroundingOpenings.get",
         "calendar.endpoint.calendars.allOpenings.get",
         "mod-settings.entries.item.get",
@@ -1938,6 +1989,8 @@
         "circulation-storage.requests.item.put",
         "circulation-storage.fixed-due-date-schedules.item.get",
         "circulation-storage.fixed-due-date-schedules.collection.get",
+        "circulation.settings.item.get",
+        "circulation.settings.collection.get",
         "circulation.rules.overdue-fine-policy.get",
         "circulation.rules.lost-item-policy.get",
         "circulation.rules.loan-policy.get",
@@ -1951,7 +2004,6 @@
         "usergroups.collection.get",
         "usergroups.item.get",
         "proxiesfor.collection.get",
-        "configuration.entries.collection.get",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "scheduled-notice-storage.scheduled-notices.item.delete",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
@@ -2039,6 +2091,8 @@
         "circulation-storage.fixed-due-date-schedules.collection.get",
         "circulation-storage.patron-notice-policies.item.get",
         "circulation-storage.request-batch.item.post",
+        "circulation.settings.item.get",
+        "circulation.settings.collection.get",
         "circulation.rules.notice-policy.get",
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
@@ -2073,7 +2127,6 @@
         "feesfines.accounts-bulk.refund.post",
         "feesfines.accounts.cancel.post",
         "feesfines.accounts-bulk.cancel.post",
-        "configuration.entries.collection.get",
         "calendar.endpoint.calendars.surroundingOpenings.get",
         "calendar.endpoint.calendars.allOpenings.get",
         "actual-cost-record-storage.actual-cost-records.collection.get",
@@ -2106,6 +2159,8 @@
         "circulation-storage.fixed-due-date-schedules.item.get",
         "circulation-storage.fixed-due-date-schedules.collection.get",
         "circulation-storage.patron-notice-policies.item.get",
+        "circulation.settings.item.get",
+        "circulation.settings.collection.get",
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
         "circulation.rules.notice-policy.get",
@@ -2117,7 +2172,6 @@
         "proxiesfor.collection.get",
         "calendar.endpoint.calendars.surroundingOpenings.get",
         "calendar.endpoint.calendars.allOpenings.get",
-        "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation",
@@ -2191,7 +2245,6 @@
         "users.collection.get",
         "addresstypes.collection.get",
         "proxiesfor.collection.get",
-        "configuration.entries.collection.get",
         "circulation.rules.notice-policy.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
@@ -2282,6 +2335,29 @@
       "visible": false
     },
     {
+      "permissionName": "modperms.circulation.requests.anonymize.item",
+      "displayName": "module permissions for single request anonymization",
+      "description": "Permissions needed to anonymize a single closed request",
+      "subPermissions": [
+        "circulation.request-anonymization.item.post",
+        "circulation-storage.requests.item.get",
+        "inventory-storage.items.item.get",
+        "inventory-storage.holdings-records.item.get",
+        "inventory-storage.instances.item.get",
+        "service-points.item.get",
+        "pubsub.publish.post"
+      ],
+      "visible": false
+    },
+    {
+      "permissionName": "circulation.requests.anonymize.item.post",
+      "displayName": "Requests: anonymize single closed request",
+      "description": "Allows anonymizing a single closed request and updating the circulation log.",
+      "subPermissions": [
+        "modperms.circulation.requests.anonymize.item"
+      ]
+    },
+    {
       "permissionName": "modperms.circulation.requests.collection.get",
       "displayName": "module permissions for one op",
       "description": "to reduce X-Okapi-Token size",
@@ -2317,6 +2393,8 @@
         "circulation-storage.request-batch.item.post",
         "circulation-storage.patron-notice-policies.item.get",
         "circulation-storage.fixed-due-date-schedules.collection.get",
+        "circulation.settings.item.get",
+        "circulation.settings.collection.get",
         "circulation.rules.loan-policy.get",
         "circulation.rules.notice-policy.get",
         "circulation.rules.request-policy.get",
@@ -2333,7 +2411,6 @@
         "calendar.endpoint.calendars.allOpenings.get",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
-        "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation",
@@ -2406,6 +2483,8 @@
         "circulation-storage.patron-notice-policies.item.get",
         "circulation-storage.cancellation-reasons.item.get",
         "circulation-storage.fixed-due-date-schedules.collection.get",
+        "circulation.settings.item.get",
+        "circulation.settings.collection.get",
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
         "circulation.rules.notice-policy.get",
@@ -2418,7 +2497,6 @@
         "usergroups.item.get",
         "proxiesfor.collection.get",
         "patron-notice.post",
-        "configuration.entries.collection.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation",
@@ -2460,6 +2538,8 @@
         "circulation-storage.requests.collection.get",
         "circulation-storage.loans.collection.get",
         "circulation-storage.loans.item.get",
+        "circulation.settings.item.get",
+        "circulation.settings.collection.get",
         "circulation.internal.fetch-items.collection.get",
         "users.item.get",
         "users.collection.get",
@@ -2467,8 +2547,6 @@
         "usergroups.collection.get",
         "usergroups.item.get",
         "pubsub.publish.post",
-        "configuration.entries.collection.get",
-        "configuration.entries.item.get",
         "mod-settings.entries.item.get",
         "mod-settings.entries.collection.get",
         "mod-settings.global.read.circulation"
@@ -2492,6 +2570,8 @@
         "circulation-storage.request-batch.item.post",
         "circulation-storage.request-policies.item.get",
         "circulation-storage.patron-notice-policies.item.get",
+        "circulation.settings.item.get",
+        "circulation.settings.collection.get",
         "circulation.rules.loan-policy.get",
         "circulation.rules.request-policy.get",
         "circulation.rules.notice-policy.get",
@@ -2506,11 +2586,6 @@
         "patron-notice.post",
         "calendar.endpoint.calendars.surroundingOpenings.get",
         "calendar.endpoint.calendars.allOpenings.get",
-        "configuration.entries.collection.get",
-        "mod-settings.entries.item.get",
-        "mod-settings.entries.collection.get",
-        "mod-settings.global.read.circulation",
-        "mod-settings.global.read.stripes-core.prefs.manage",
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "manualblocks.collection.get",
@@ -2569,11 +2644,8 @@
         "pubsub.publish.post",
         "patron-notice.post",
         "circulation-storage.loans-history.collection.get",
-        "configuration.entries.collection.get",
-        "configuration.entries.item.get",
-        "mod-settings.entries.item.get",
-        "mod-settings.entries.collection.get",
-        "mod-settings.global.read.circulation"
+        "circulation.settings.item.get",
+        "circulation.settings.collection.get"
       ],
       "visible": false
     },
@@ -2655,7 +2727,6 @@
         "scheduled-notice-storage.scheduled-notices.collection.delete",
         "scheduled-notice-storage.scheduled-notices.item.post",
         "pubsub.publish.post",
-        "configuration.entries.collection.get",
         "patron-notice.post",
         "circulation-storage.loans-history.collection.get",
         "overdue-fines-policies.item.get",
@@ -2685,6 +2756,8 @@
         "circulation.internal.fetch-items.collection.get",
         "circulation-storage.requests.item.get",
         "circulation-storage.requests.collection.get",
+        "circulation-storage.circulation-settings.item.get",
+        "circulation-storage.circulation-settings.collection.get",
         "users.item.get",
         "users.collection.get",
         "addresstypes.item.get",
@@ -2700,6 +2773,8 @@
         "circulation.internal.fetch-items.collection.get",
         "circulation-storage.requests.item.get",
         "circulation-storage.requests.collection.get",
+        "circulation-storage.circulation-settings.item.get",
+        "circulation-storage.circulation-settings.collection.get",
         "inventory-storage.holdings.item.get",
         "inventory-storage.holdings.collection.get",
         "inventory-storage.instances.item.get",

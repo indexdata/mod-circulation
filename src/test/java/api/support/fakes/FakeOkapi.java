@@ -240,6 +240,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("institution")
       .withRootPath("/location-units/institutions")
+      .withQueryParameters("includeShadow")
       .withCollectionPropertyName("locinsts")
       .validateRecordsWith(validatorForLocationInstSchema())
       .create().register(router);
@@ -247,6 +248,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("campus")
       .withRootPath("/location-units/campuses")
+      .withQueryParameters("includeShadow")
       .withCollectionPropertyName("loccamps")
       .validateRecordsWith(validatorForLocationCampSchema())
       .create().register(router);
@@ -254,6 +256,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("library")
       .withRootPath("/location-units/libraries")
+      .withQueryParameters("includeShadow")
       .withCollectionPropertyName("loclibs")
       .validateRecordsWith(validatorForLocationLibSchema())
       .create().register(router);
@@ -261,6 +264,7 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeStorageModuleBuilder()
       .withRecordName("locations")
       .withRootPath("/locations")
+      .withQueryParameters("includeShadowLocations")
       .withCollectionPropertyName("locations")
       .withRequiredProperties("name", "code", "institutionId", "campusId",
         "libraryId", "primaryServicePoint")
@@ -436,13 +440,11 @@ public class FakeOkapi extends AbstractVerticle {
     new FakeFeeFineOperationsModule().register(router);
 
     server.requestHandler(router)
-      .listen(PORT_TO_USE, result -> {
-        if (result.succeeded()) {
-          log.info("Listening on {}", server.actualPort());
-          startFuture.complete();
-        } else {
-          startFuture.fail(result.cause());
-        }
+      .listen(PORT_TO_USE)
+      .onFailure(startFuture::fail)
+      .onSuccess(httpServer -> {
+        log.info("Listening on {}", server.actualPort());
+        startFuture.complete();
       });
   }
 
@@ -519,14 +521,12 @@ public class FakeOkapi extends AbstractVerticle {
     log.debug("Stopping fake okapi");
 
     if (server != null) {
-      server.close(result -> {
-        if (result.succeeded()) {
+      server.close()
+        .onFailure(stopFuture::fail)
+        .onSuccess(v -> {
           log.info("Stopped listening on {}", server.actualPort());
           stopFuture.complete();
-        } else {
-          stopFuture.fail(result.cause());
-        }
-      });
+        });
     }
   }
 
